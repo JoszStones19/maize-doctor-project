@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "237296709278",
+    "project_id": "maize-doctor-app",
+    "storage_bucket": "maize-doctor-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:237296709278:android:65f1271e480ec8dbb4158f",
+        "android_client_info": {
+          "package_name": "maizedoctor.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAv_TxHK8aqGVkzgx7Cz2e0oSaLSJx-B-U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
