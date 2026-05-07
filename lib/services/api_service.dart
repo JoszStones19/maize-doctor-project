@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'connectivity_service.dart';
 import 'inference_service.dart';
+import 'storage_service.dart';
 import '../models/models.dart';
 
 // ── Custom exceptions ──
@@ -17,10 +19,14 @@ class LowConfidenceException implements Exception {
 }
 
 class ApiService {
-  // ── CHANGE THIS TO YOUR KAGGLE/NGROK URL ──
-  static const String baseUrl = 'https://calmly-floricultural-reynaldo.ngrok-free.dev';
-  static const bool mockMode  = false;
-  static const double confidenceThreshold = 0.45;
+  static const bool   mockMode = false;
+
+  // Offline thresholds:
+  // Below notLeafThreshold  → image is not recognisable as a maize leaf at all
+  // Below confidenceThreshold → leaf detected but photo is too unclear / low quality
+  // Above confidenceThreshold → show result
+  static const double notLeafThreshold    = 0.50;
+  static const double confidenceThreshold = 0.60;
 
   final InferenceService _inferenceService = InferenceService();
   final Dio _dio = Dio(BaseOptions(
@@ -29,29 +35,33 @@ class ApiService {
     contentType: 'application/json',
   ));
 
-  // ── Main predict — auto switches online/offline ──
+  // ── Main predict — uses backend URL from prefs when set, else offline ──
   Future<PredictionResult> predict(String imagePath) async {
     if (mockMode) return _mockResult();
 
-    final online = await ConnectivityService.isOnline();
+    final savedUrl = await StorageService().getBackendUrl();
+    final hasUrl   = savedUrl != null && savedUrl.isNotEmpty;
 
-    if (online) {
-      try {
-        print('🌐 Online — using Kaggle API');
-        return await _predictOnline(imagePath);
-      } catch (e) {
-        if (e is NotALeafException || e is LowConfidenceException) rethrow;
-        print('⚠️ API failed, falling back to on-device: $e');
-        return await _predictOnDevice(imagePath);
+    if (hasUrl) {
+      final online = await ConnectivityService.isOnline();
+      if (online) {
+        try {
+          debugPrint('Online — using backend: $savedUrl');
+          return await _predictOnline(imagePath, savedUrl);
+        } catch (e) {
+          if (e is NotALeafException || e is LowConfidenceException) rethrow;
+          debugPrint('API failed, falling back to on-device: $e');
+          return await _predictOnDevice(imagePath);
+        }
       }
-    } else {
-      print('📴 Offline — using on-device TFLite model');
-      return await _predictOnDevice(imagePath);
     }
+
+    debugPrint('No URL configured or offline — using on-device TFLite model');
+    return await _predictOnDevice(imagePath);
   }
 
   // ── Online prediction ──
-  Future<PredictionResult> _predictOnline(String imagePath) async {
+  Future<PredictionResult> _predictOnline(String imagePath, String baseUrl) async {
     final bytes  = await File(imagePath).readAsBytes();
     final base64 = base64Encode(bytes);
 
@@ -63,7 +73,7 @@ class ApiService {
 
     if (response.statusCode == 422) {
       final error = response.data['error'];
-      if (error == 'not_a_leaf') throw NotALeafException(response.data['message']);
+      if (error == 'not_a_leaf') throw NotALeafException(response.data['message'] as String);
     }
 
     if (response.statusCode != 200) {
@@ -71,30 +81,31 @@ class ApiService {
     }
 
     final result = PredictionResult.fromJson(
-      Map<String, dynamic>.from(response.data),
+      Map<String, dynamic>.from(response.data as Map),
     );
 
-    if (result.confidence < confidenceThreshold) {
-      throw LowConfidenceException();
-    }
+    if (result.confidence < notLeafThreshold)    throw NotALeafException();
+    if (result.confidence < confidenceThreshold) throw LowConfidenceException();
 
     return result;
   }
 
   // ── Offline on-device prediction ──
   Future<PredictionResult> _predictOnDevice(String imagePath) async {
-    final raw = await _inferenceService.predict(imagePath);
+    final raw  = await _inferenceService.predict(imagePath);
+    final conf = raw['confidence'] as double;
 
-    if ((raw['confidence'] as double) < confidenceThreshold) {
-      throw LowConfidenceException();
-    }
+    // Very low confidence → probably not a maize leaf at all
+    if (conf < notLeafThreshold) throw NotALeafException();
+
+    // Moderate confidence → photo too blurry / unclear
+    if (conf < confidenceThreshold) throw LowConfidenceException();
 
     return PredictionResult.fromJson(raw, isOffline: true);
   }
 
   // ── Mock result for testing ──
   PredictionResult _mockResult() {
-    Future.delayed(const Duration(seconds: 2));
     return PredictionResult(
       disease:    'northern_leaf_blight',
       confidence: 0.92,
@@ -104,15 +115,6 @@ class ApiService {
         Alternative(label: 'healthy',        confidence: 0.01),
       ],
     );
-  }
-
-  Future<bool> checkHealth() async {
-    try {
-      final response = await _dio.get('$baseUrl/health');
-      return response.statusCode == 200;
-    } catch (_) {
-      return false;
-    }
   }
 
   void dispose() => _inferenceService.dispose();

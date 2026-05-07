@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../constants/theme.dart';
+import '../../providers/auth_provider.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -60,10 +62,10 @@ class _LandingScreenState extends State<LandingScreen>
                           width: 64,
                           height: 64,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
+                            color: Colors.white.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(
-                              color: AppColors.heroSubtext.withOpacity(0.3),
+                              color: AppColors.heroSubtext.withValues(alpha: 0.3),
                             ),
                           ),
                           child: const Icon(
@@ -146,10 +148,26 @@ class _LandingScreenState extends State<LandingScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 8),
+
+                  // Continue as Guest
+                  TextButton(
+                    onPressed: () {
+                      context.read<AuthProvider>().continueAsGuest();
+                      context.go('/home');
+                    },
+                    child: const Text(
+                      'Continue as Guest (no account needed)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
 
                   const Text(
-                    'Helping farmers protect their crops\nwith the power of AI.',
+                    'Guest mode: scans work fully offline.\nSign in to save your scan history.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
@@ -177,9 +195,9 @@ class _FeaturePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: AppColors.heroSubtext.withOpacity(0.2)),
+        border: Border.all(color: AppColors.heroSubtext.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

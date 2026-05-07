@@ -18,6 +18,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   bool _sent       = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<AuthProvider>().clearError();
+    });
+  }
+
+  @override
   void dispose() {
     _emailCtrl.dispose();
     super.dispose();
@@ -47,7 +55,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     onPressed: () => context.go('/login'),
                     icon: const Icon(Icons.arrow_back, color: AppColors.primaryMuted),
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.1),
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),

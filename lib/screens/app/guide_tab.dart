@@ -142,7 +142,7 @@ class _DiseaseCardState extends State<_DiseaseCard> {
                   decoration: BoxDecoration(
                     color: _sevBg,
                     borderRadius: BorderRadius.circular(7),
-                    border: Border.all(color: _sevColor.withOpacity(0.4), width: 0.5),
+                    border: Border.all(color: _sevColor.withValues(alpha: 0.4), width: 0.5),
                   ),
                   child: Text(widget.disease.severity, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: _sevColor)),
                 ),

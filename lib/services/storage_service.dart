@@ -3,7 +3,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 
 class StorageService {
-  static const String _key = 'maize_scan_history';
+  static const String _key    = 'maize_scan_history';
+  static const String _urlKey = 'backend_url';
+
+  Future<String?> getBackendUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    final url   = prefs.getString(_urlKey);
+    return (url != null && url.isNotEmpty) ? url : null;
+  }
+
+  Future<void> setBackendUrl(String? url) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (url == null || url.trim().isEmpty) {
+      await prefs.remove(_urlKey);
+    } else {
+      await prefs.setString(_urlKey, url.trim());
+    }
+  }
 
   Future<List<ScanRecord>> getHistory(String userId) async {
     final prefs = await SharedPreferences.getInstance();

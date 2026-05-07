@@ -33,7 +33,14 @@ class AppTheme {
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
     scaffoldBackgroundColor: AppColors.background,
-    textTheme: GoogleFonts.dmSansTextTheme(),
+    textTheme: GoogleFonts.dmSansTextTheme().copyWith(
+      bodyLarge:   GoogleFonts.dmSans(fontSize: 16, color: AppColors.textPrimary),
+      bodyMedium:  GoogleFonts.dmSans(fontSize: 14, color: AppColors.textSecondary),
+      bodySmall:   GoogleFonts.dmSans(fontSize: 12, color: AppColors.textMuted),
+      labelLarge:  GoogleFonts.dmSans(fontSize: 15, fontWeight: FontWeight.w600),
+      titleMedium: GoogleFonts.dmSans(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+      titleLarge:  GoogleFonts.dmSans(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+    ),
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.heroBg,
       foregroundColor: AppColors.primaryMuted,
@@ -44,8 +51,9 @@ class AppTheme {
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.primaryMuted,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         elevation: 0,
+        textStyle: GoogleFonts.dmSans(fontSize: 15, fontWeight: FontWeight.w600),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
@@ -53,7 +61,8 @@ class AppTheme {
         foregroundColor: AppColors.primary,
         side: const BorderSide(color: AppColors.primary),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        textStyle: GoogleFonts.dmSans(fontSize: 15, fontWeight: FontWeight.w500),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -75,8 +84,8 @@ class AppTheme {
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.danger, width: 0.5),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 15),
     ),
   );
 }

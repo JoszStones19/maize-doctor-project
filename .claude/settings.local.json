@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter pub:*)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\user\\\\Downloads\\\\MaizeDoctor\\\\maize-doctor-project\" -Recurse -Force | Select-Object -Property FullName | ForEach-Object { $_.FullName } | Sort-Object)",
+      "PowerShell(Get-ChildItem *)",
+      "Bash(dir /s /b \"C:\\\\Users\\\\user\\\\Downloads\\\\MaizeDoctor\\\\maize-doctor-project\")",
+      "PowerShell(Remove-Item *)",
+      "Bash(flutter test *)",
+      "Bash(flutter analyze *)"
+    ]
+  }
+}

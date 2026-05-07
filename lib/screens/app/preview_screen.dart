@@ -99,7 +99,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
                     onPressed: () => context.pop(),
                     icon: const Icon(Icons.arrow_back, color: AppColors.primaryMuted),
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.1),
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
@@ -126,10 +126,10 @@ class _PreviewScreenState extends State<PreviewScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.6),
+                              color: Colors.black.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(99),
                             ),
-                            child: const Text('Leaf detected', style: TextStyle(color: Colors.white, fontSize: 12)),
+                            child: const Text('Ready to analyse', style: TextStyle(color: Colors.white, fontSize: 12)),
                           ),
                         ),
                       ),

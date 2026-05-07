@@ -1,8 +1,11 @@
 import 'dart:io';
-import 'dart:typed_data';
+import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 import '../constants/diseases.dart';
+
+const int kInputSize = 224;
 
 class InferenceService {
   Interpreter? _interpreter;
@@ -14,24 +17,26 @@ class InferenceService {
       _interpreter = await Interpreter.fromAsset(
         'assets/models/maize_model.tflite',
       );
+      _interpreter!.allocateTensors();
       _isLoaded = true;
-      print('✅ On-device TFLite model loaded');
+      debugPrint('TFLite model loaded. '
+          'Input: ${_interpreter!.getInputTensor(0).shape} '
+          'Output: ${_interpreter!.getOutputTensor(0).shape}');
     } catch (e) {
-      print('❌ TFLite load failed: $e');
+      debugPrint('TFLite load failed: $e');
       rethrow;
     }
   }
 
   Float32List _preprocessImage(File imageFile) {
-    final bytes  = imageFile.readAsBytesSync();
+    final bytes = imageFile.readAsBytesSync();
     img.Image? image = img.decodeImage(bytes);
-    image = img.copyResize(image!, width: 224, height: 224);
+    image = img.copyResize(image!, width: kInputSize, height: kInputSize);
 
-    final input = Float32List(1 * 224 * 224 * 3);
+    final input = Float32List(kInputSize * kInputSize * 3);
     int idx = 0;
-
-    for (int y = 0; y < 224; y++) {
-      for (int x = 0; x < 224; x++) {
+    for (int y = 0; y < kInputSize; y++) {
+      for (int x = 0; x < kInputSize; x++) {
         final pixel = image.getPixel(x, y);
         input[idx++] = (pixel.r / 255.0 - kMean[0]) / kStd[0];
         input[idx++] = (pixel.g / 255.0 - kMean[1]) / kStd[1];
@@ -43,37 +48,46 @@ class InferenceService {
 
   List<double> _softmax(List<double> logits) {
     final maxVal = logits.reduce((a, b) => a > b ? a : b);
-    final exps   = logits.map((l) => _exp(l - maxVal)).toList();
+    final exps   = logits.map((l) => math.exp(l - maxVal)).toList();
     final sum    = exps.reduce((a, b) => a + b);
     return exps.map((e) => e / sum).toList();
   }
 
-  double _exp(double x) {
-    if (x < -20) return 0.0;
-    if (x > 20)  return 485165195.4;
-    double result = 1.0;
-    double term   = 1.0;
-    for (int i = 1; i <= 10; i++) {
-      term   *= x / i;
-      result += term;
-    }
-    return result.abs();
+  // If all values are in [0,1], model already applied softmax/sigmoid.
+  // Real logits typically exceed 1.0 or go negative; probabilities stay in [0,1].
+  bool _isAlreadyProbabilities(List<double> v) {
+    return v.every((x) => x >= -0.001 && x <= 1.001);
   }
 
   Future<Map<String, dynamic>> predict(String imagePath) async {
     if (!_isLoaded) await loadModel();
 
-    final imageFile = File(imagePath);
-    final input     = _preprocessImage(imageFile);
-    final output    = List.filled(kClassLabels.length, 0.0)
-        .reshape([1, kClassLabels.length]);
+    final input = _preprocessImage(File(imagePath));
 
-    _interpreter!.run(input.reshape([1, 224, 224, 3]), output);
+    // ── Use low-level tensor API to guarantee the output buffer is read ──
+    // The high-level run() can silently leave the buffer as zeros.
+    final inputTensor = _interpreter!.getInputTensor(0);
+    inputTensor.data.buffer.asFloat32List().setAll(0, input);
+    _interpreter!.invoke();
 
-    final logits = List<double>.from(output[0]);
-    final probs  = _softmax(logits);
+    final outputTensor = _interpreter!.getOutputTensor(0);
+    final rawFlat      = outputTensor.data.buffer.asFloat32List();
 
-    final ranked = List.generate(kClassLabels.length, (i) {
+    // Works for both [4] and [1,4] output shapes
+    final n      = kClassLabels.length;
+    final rawOut = rawFlat.sublist(rawFlat.length - n)
+                          .map((v) => v.toDouble())
+                          .toList();
+
+    debugPrint('TFLite raw  [${kClassLabels.join(",")}]: $rawOut');
+
+    final probs = _isAlreadyProbabilities(rawOut)
+        ? rawOut
+        : _softmax(rawOut);
+
+    debugPrint('TFLite probs[${kClassLabels.join(",")}]: $probs');
+
+    final ranked = List.generate(n, (i) {
       return {'label': kClassLabels[i], 'confidence': probs[i]};
     })..sort((a, b) =>
         (b['confidence'] as double).compareTo(a['confidence'] as double));

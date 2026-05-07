@@ -33,11 +33,12 @@ class AuthService {
     );
   }
 
-  // ── FIXED: google_sign_in v7 new API ──
   Future<UserCredential?> signInWithGoogle() async {
-    final GoogleSignInAccount? googleUser = await _googleSignIn.signInSilently()
-        ?? await _googleSignIn.signIn();
-    if (googleUser == null) return null;
+    // Disconnect any stale session first so the picker always shows
+    try { await _googleSignIn.signOut(); } catch (_) {}
+
+    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) return null; // user cancelled
 
     final GoogleSignInAuthentication googleAuth =
         await googleUser.authentication;
@@ -64,7 +65,8 @@ class AuthService {
       case 'user-not-found':
         return 'No account found with this email.';
       case 'wrong-password':
-        return 'Incorrect password. Please try again.';
+      case 'invalid-credential':
+        return 'Incorrect email or password. Please try again.';
       case 'email-already-in-use':
         return 'An account already exists with this email.';
       case 'invalid-email':
@@ -75,8 +77,11 @@ class AuthService {
         return 'Too many attempts. Please try again later.';
       case 'network-request-failed':
         return 'No internet connection. Please check your network.';
+      case 'sign_in_failed':
+      case 'account-exists-with-different-credential':
+        return 'Google sign-in failed. Check your internet and try again.';
       default:
-        return 'Something went wrong. Please try again.';
+        return 'Sign-in failed (${e.code}). Please try again.';
     }
   }
 }

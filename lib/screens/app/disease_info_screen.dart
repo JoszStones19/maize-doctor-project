@@ -43,7 +43,7 @@ class _DiseaseInfoScreenState extends State<DiseaseInfoScreen> {
                     onPressed: () => context.pop(),
                     icon: const Icon(Icons.arrow_back, color: AppColors.primaryMuted),
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.1),
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),

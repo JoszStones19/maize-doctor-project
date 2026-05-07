@@ -63,10 +63,11 @@ const Map<String, DiseaseInfo> kDiseases = {
   ),
 };
 
+// Order MUST match labels.txt (the model's output index order)
 const List<String> kClassLabels = [
-  'northern_leaf_blight',
   'gray_leaf_spot',
   'common_rust',
+  'northern_leaf_blight',
   'healthy',
 ];
 

@@ -19,6 +19,14 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscure     = true;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<AuthProvider>().clearError();
+    });
+  }
+
+  @override
   void dispose() {
     _emailCtrl.dispose();
     _passCtrl.dispose();
@@ -59,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () => context.go('/landing'),
                     icon: const Icon(Icons.arrow_back, color: AppColors.primaryMuted),
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.1),
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),

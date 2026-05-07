@@ -1,6 +1,6 @@
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../screens/splash_screen.dart';
 import '../screens/auth/landing_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
@@ -11,21 +11,26 @@ import '../screens/app/results_screen.dart';
 import '../screens/app/disease_info_screen.dart';
 import '../models/models.dart';
 
-final router = GoRouter(
-  initialLocation: '/landing',
+GoRouter createRouter(AuthProvider auth) => GoRouter(
+  refreshListenable: auth,
+  initialLocation: '/splash',
   redirect: (context, state) {
-    final auth     = context.read<AuthProvider>();
     final loggedIn = auth.isLoggedIn;
+    final onSplash = state.matchedLocation.startsWith('/splash');
     final onAuth   = state.matchedLocation.startsWith('/landing') ||
                      state.matchedLocation.startsWith('/login')   ||
                      state.matchedLocation.startsWith('/register') ||
                      state.matchedLocation.startsWith('/forgot');
 
+    if (onSplash) return null; // splash manages its own navigation
     if (!loggedIn && !onAuth) return '/landing';
-    if (loggedIn  &&  onAuth) return '/home';
+    if (loggedIn && onAuth && !auth.isGuest) return '/home';
     return null;
   },
   routes: [
+    // ── Splash ──
+    GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
+
     // ── Auth routes ──
     GoRoute(path: '/landing',  builder: (_, __) => const LandingScreen()),
     GoRoute(path: '/login',    builder: (_, __) => const LoginScreen()),

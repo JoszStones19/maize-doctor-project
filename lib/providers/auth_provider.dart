@@ -5,17 +5,26 @@ import '../services/auth_service.dart';
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
   User? _user;
-  bool _loading = false;
+  bool  _loading = false;
+  bool  _isGuest = false;
   String? _error;
 
-  User? get user       => _user;
-  bool  get loading    => _loading;
-  String? get error    => _error;
-  bool  get isLoggedIn => _user != null;
+  User?   get user       => _user;
+  bool    get loading    => _loading;
+  String? get error      => _error;
+  bool    get isGuest    => _isGuest;
+  // logged-in OR guest — both can access the main app
+  bool    get isLoggedIn => _user != null || _isGuest;
+
+  void continueAsGuest() {
+    _isGuest = true;
+    notifyListeners();
+  }
 
   AuthProvider() {
     _authService.authStateChanges.listen((user) {
       _user = user;
+      if (user != null) _isGuest = false; // clear guest flag on real sign-in
       notifyListeners();
     });
   }
@@ -95,7 +104,8 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> signOut() async {
     await _authService.signOut();
-    _user = null;
+    _user    = null;
+    _isGuest = false;
     notifyListeners();
   }
 }
